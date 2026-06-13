@@ -1,3 +1,18 @@
 from django.db import models
+from django.conf import settings
 
-# Create your models here.
+
+class Recipient(models.Model):
+    email = models.EmailField(unique=True)
+    full_name = models.CharField(max_length=255)
+    comment = models.TextField(blank=True, null=True)
+
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='recipients'
+    )
+
+    def __str__(self):
+        return self.email
+

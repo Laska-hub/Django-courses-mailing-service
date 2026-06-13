@@ -1,0 +1,13 @@
+<h1>Recipients</h1>
+
+<a href="{% url 'clients:create' %}">Add</a>
+
+<ul>
+    {% for recipient in recipients %}
+        <li>
+            <a href="{% url 'clients:detail' recipient.pk %}">
+                {{ recipient.email }}
+            </a>
+        </li>
+    {% endfor %}
+</ul>

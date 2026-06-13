@@ -1,0 +1,6 @@
+<h1>{{ recipient.email }}</h1>
+<p>{{ recipient.full_name }}</p>
+<p>{{ recipient.comment }}</p>
+
+<a href="{% url 'clients:update' recipient.pk %}">Edit</a>
+<a href="{% url 'clients:delete' recipient.pk %}">Delete</a>

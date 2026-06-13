@@ -1,0 +1,6 @@
+<h1>{{ message.subject }}</h1>
+
+<p>{{ message.body }}</p>
+
+<a href="{% url 'messages:update' message.pk %}">Edit</a>
+<a href="{% url 'messages:delete' message.pk %}">Delete</a>
