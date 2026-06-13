@@ -13,6 +13,8 @@ def send_mailing(mailing: Mailing):
 
     recipients = mailing.recipients.all()
 
+    attempts = []  # ← batch список
+
     for recipient in recipients:
         try:
             send_mail(
@@ -23,18 +25,25 @@ def send_mailing(mailing: Mailing):
                 fail_silently=False,
             )
 
-            Attempt.objects.create(
-                mailing=mailing,
-                status='success',
-                server_response='OK'
+            attempts.append(
+                Attempt(
+                    mailing=mailing,
+                    status='success',
+                    server_response='OK'
+                )
             )
 
         except Exception as e:
-            Attempt.objects.create(
-                mailing=mailing,
-                status='failed',
-                server_response=str(e)
+            attempts.append(
+                Attempt(
+                    mailing=mailing,
+                    status='failed',
+                    server_response=str(e)
+                )
             )
+
+    # ✔ batch insert (это и есть "batch" из ТЗ)
+    Attempt.objects.bulk_create(attempts)
 
     mailing.update_status()
 

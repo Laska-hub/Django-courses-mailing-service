@@ -30,9 +30,10 @@ class Mailing(models.Model):
     )
 
     def update_status(self):
+        """
+        Обновляет статус рассылки в зависимости от текущего времени
+        """
         now = timezone.now()
-
-        new_status = self.status
 
         if now < self.start_time:
             new_status = 'created'
@@ -55,7 +56,11 @@ class Attempt(models.Model):
         ('failed', 'Не успешно'),
     ]
 
-    attempt_time = models.DateTimeField(auto_now_add=True)
+    mailing = models.ForeignKey(
+        Mailing,
+        on_delete=models.CASCADE,
+        related_name='attempts'
+    )
 
     status = models.CharField(
         max_length=20,
@@ -64,11 +69,7 @@ class Attempt(models.Model):
 
     server_response = models.TextField(blank=True, null=True)
 
-    mailing = models.ForeignKey(
-        Mailing,
-        on_delete=models.CASCADE,
-        related_name='attempts'
-    )
+    attempt_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Attempt {self.status} ({self.attempt_time})"
+        return f"Attempt {self.status} ({self.attempt_time:%Y-%m-%d %H:%M})"
