@@ -1,0 +1,13 @@
+<!-- mailings/templates/mailings/mailing_list.html -->
+
+<h1>Список рассылок</h1>
+
+<ul>
+  {% for mailing in mailings %}
+    <li>
+      {{ mailing.id }} — {{ mailing.status }} — {{ mailing.owner }}
+    </li>
+  {% empty %}
+    <li>Рассылок нет</li>
+  {% endfor %}
+</ul>

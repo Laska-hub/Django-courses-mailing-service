@@ -5,12 +5,13 @@ from mailings.views import HomeView
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # ✔ ГЛАВНАЯ СТРАНИЦА
     path('', HomeView.as_view(), name='home'),
 
-    # ✔ MAILINGS
     path('mailings/', include('mailings.urls')),
+
+    path('users/', include('users.urls')),
 ]
+
 
 
 
