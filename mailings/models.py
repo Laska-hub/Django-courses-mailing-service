@@ -39,35 +39,33 @@ class Mailing(models.Model):
         related_name='mailings'
     )
 
-    # =========================
-    # 🔥 ВАЛИДАЦИЯ (КЛЮЧЕВОЕ ДЛЯ ЗАЩИТЫ)
-    # =========================
+
+    # ВАЛИДАЦИЯ
+
     def clean(self):
         now = timezone.now()
 
         if self.start_time and self.end_time:
 
-            # ❗ start не может быть в прошлом
+            #  start не может быть в прошлом
             if self.start_time < now:
                 raise ValidationError(
                     {"start_time": "Start time не может быть в прошлом"}
                 )
 
-            # ❗ логическая проверка интервала
+            #  логическая проверка интервала
             if self.start_time >= self.end_time:
                 raise ValidationError(
                     {"end_time": "End time должен быть позже start time"}
                 )
 
-    # =========================
-    # SAVE (чтобы clean работал везде)
-    # =========================
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-    # =========================
+
     # ДИНАМИЧЕСКИЙ СТАТУС
-    # =========================
+
     def update_status(self):
         now = timezone.now()
 
@@ -84,7 +82,7 @@ class Mailing(models.Model):
         if self.status != new_status:
             self.status = new_status
 
-            # ⚠️ важно: НЕ вызываем save() с full_clean логикой
+            # вызываем save() с full_clean логикой
             self.save(update_fields=['status'])
 
     def __str__(self):

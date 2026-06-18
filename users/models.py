@@ -10,7 +10,6 @@ class User(AbstractUser):
 
     verification_token = models.UUIDField(default=uuid.uuid4, unique=True)
 
-    is_manager = models.BooleanField(default=False)
 
     def __str__(self):
         return self.username

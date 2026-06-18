@@ -1,16 +1,28 @@
-from django.views.generic import ListView, TemplateView, View
+from django.views.generic import (
+    ListView,
+    DetailView,
+    CreateView,
+    UpdateView,
+    DeleteView,
+    TemplateView,
+    View
+)
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
+from django.urls import reverse_lazy
 from django.core.cache import cache
 
 from clients.models import Recipient
+from messages_app.models import Message
+
 from .models import Mailing, Attempt
 from .services import send_mailing
+from .forms import MailingForm
 
 
 # =========================
-# HOME PAGE (СТАТИСТИКА + CACHE)
+# HOME PAGE (STATISTICS + CACHE)
 # =========================
 class HomeView(LoginRequiredMixin, TemplateView):
     template_name = 'home.html'
@@ -23,29 +35,14 @@ class HomeView(LoginRequiredMixin, TemplateView):
         stats = cache.get(cache_key)
 
         if stats is None:
-
             mailings = Mailing.objects.all()
-
-            # 🔥 динамическое обновление статуса (ТЗ)
-            for m in mailings:
-                m.update_status()
 
             stats = {
                 "total_mailings": mailings.count(),
-
-                "active_mailings": mailings.filter(
-                    status='started'
-                ).count(),
-
+                "active_mailings": mailings.filter(status='started').count(),
                 "total_recipients": Recipient.objects.count(),
-
-                "attempts_success": Attempt.objects.filter(
-                    status='success'
-                ).count(),
-
-                "attempts_failed": Attempt.objects.filter(
-                    status='failed'
-                ).count(),
+                "attempts_success": Attempt.objects.filter(status='success').count(),
+                "attempts_failed": Attempt.objects.filter(status='failed').count(),
             }
 
             cache.set(cache_key, stats, 60)
@@ -55,7 +52,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
 
 # =========================
-# MAILING LIST (РОЛИ + CACHE)
+# MAILING LIST
 # =========================
 class MailingListView(LoginRequiredMixin, ListView):
     model = Mailing
@@ -66,44 +63,94 @@ class MailingListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
 
-        cache_key = f"mailings_list_{user.id}"
-        cached = cache.get(cache_key)
+        if user.is_superuser or user.groups.filter(name="Manager").exists():
+            return Mailing.objects.all()
 
-        if cached is not None:
-            return cached
-
-        # 🔥 роли (ТЗ)
-        if user.is_superuser or getattr(user, 'is_manager', False):
-            qs = Mailing.objects.all()
-        else:
-            qs = Mailing.objects.filter(owner=user)
-
-        # важно: сразу список (чтобы кеш не ломался)
-        qs = list(qs)
-
-        cache.set(cache_key, qs, 30)
-        return qs
+        return Mailing.objects.filter(owner=user)
 
 
 # =========================
-# RUN MAILING (БИЗНЕС-ЛОГИКА + ЗАЩИТА)
+# MAILING DETAIL
+# =========================
+class MailingDetailView(LoginRequiredMixin, DetailView):
+    model = Mailing
+    template_name = 'mailings/mailing_detail.html'
+    context_object_name = 'mailing'
+
+    def get_object(self):
+        obj = super().get_object()
+        obj.update_status()
+        return obj
+
+
+# =========================
+# MAILING CREATE
+# =========================
+class MailingCreateView(LoginRequiredMixin, CreateView):
+    model = Mailing
+    form_class = MailingForm
+    template_name = 'mailings/mailing_form.html'
+    success_url = reverse_lazy('mailings:list')
+
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        response = super().form_valid(form)
+
+        cache.delete("home_stats")
+        return response
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+
+# =========================
+# MAILING UPDATE
+# =========================
+class MailingUpdateView(LoginRequiredMixin, UpdateView):
+    model = Mailing
+    form_class = MailingForm
+    template_name = 'mailings/mailing_form.html'
+    success_url = reverse_lazy('mailings:list')
+
+    def get_queryset(self):
+        return Mailing.objects.filter(owner=self.request.user)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+
+# =========================
+# MAILING DELETE
+# =========================
+class MailingDeleteView(LoginRequiredMixin, DeleteView):
+    model = Mailing
+    template_name = 'mailings/mailing_confirm_delete.html'
+    success_url = reverse_lazy('mailings:list')
+
+    def get_queryset(self):
+        return Mailing.objects.filter(owner=self.request.user)
+
+
+# =========================
+# RUN MAILING (BUSINESS LOGIC)
 # =========================
 class RunMailingView(LoginRequiredMixin, View):
 
     def get(self, request, pk):
         mailing = get_object_or_404(Mailing, pk=pk)
 
-        # 🔥 защита доступа
         if not (
             request.user.is_superuser
-            or getattr(request.user, 'is_manager', False)
+            or request.user.groups.filter(name="Manager").exists()
         ):
             return HttpResponse("Нет доступа", status=403)
 
-        # 🔥 запуск рассылки (batch Attempt внутри services)
         result = send_mailing(mailing)
 
-        # 🔥 сброс кеша после изменения данных
         cache.delete("home_stats")
         cache.delete(f"mailings_list_{request.user.id}")
 

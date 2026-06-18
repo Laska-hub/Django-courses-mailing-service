@@ -1,14 +1,32 @@
 from pathlib import Path
 
+from environs import Env
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# =====================
+# ENV LOAD
+# =====================
+env = Env()
+env.read_env()
 
-SECRET_KEY = 'django-insecure-_p7d=off4a+ha0v_$9@(5p$wc!qt3l==u3p7!-m7u5e&f9wodz'
+# =====================
+# CORE SETTINGS
+# =====================
+SECRET_KEY = env.str(
+    "SECRET_KEY",
+    default="django-insecure-default-key"
+)
 
-DEBUG = True
+DEBUG = env.bool(
+    "DEBUG",
+    default=True
+)
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = env.list(
+    "ALLOWED_HOSTS",
+    default=["127.0.0.1", "localhost"]
+)
 
 # =====================
 # APPLICATIONS
@@ -28,7 +46,6 @@ INSTALLED_APPS = [
     'mailings',
 ]
 
-
 # =====================
 # MIDDLEWARE
 # =====================
@@ -42,9 +59,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 ROOT_URLCONF = 'config.urls'
-
 
 # =====================
 # TEMPLATES
@@ -64,9 +79,7 @@ TEMPLATES = [
     },
 ]
 
-
 WSGI_APPLICATION = 'config.wsgi.application'
-
 
 # =====================
 # DATABASE
@@ -77,7 +90,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 # =====================
 # PASSWORD VALIDATION
@@ -97,21 +109,21 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # =====================
 # INTERNATIONALIZATION
 # =====================
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_TZ = True
 
+TIME_ZONE = 'UTC'
+
+USE_I18N = True
+
+USE_TZ = True
 
 # =====================
 # STATIC
 # =====================
 STATIC_URL = 'static/'
-
 
 # =====================
 # AUTH
@@ -120,18 +132,33 @@ AUTH_USER_MODEL = 'users.User'
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
+
 LOGOUT_REDIRECT_URL = '/login/'
 
+# =====================
+# EMAIL
+# =====================
+EMAIL_BACKEND = env.str(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.console.EmailBackend"
+)
+
+DEFAULT_FROM_EMAIL = env.str(
+    "DEFAULT_FROM_EMAIL",
+    default="test@example.com"
+)
 
 # =====================
-# EMAIL (для курсовой: вывод в консоль)
+# CACHE
 # =====================
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = "test@example.com"
-
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         "LOCATION": "unique-mailing-cache",
     }
 }
+
+# =====================
+# DEFAULT PRIMARY KEY
+# =====================
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

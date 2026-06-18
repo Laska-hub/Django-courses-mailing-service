@@ -1,4 +1,4 @@
-from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .models import Recipient
@@ -13,7 +13,7 @@ class RecipientListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
 
-        if user.is_superuser or getattr(user, 'is_manager', False):
+        if user.is_superuser or user.groups.filter(name="Manager").exists():
             return Recipient.objects.all()
 
         return Recipient.objects.filter(owner=user)
@@ -27,7 +27,7 @@ class RecipientDetailView(LoginRequiredMixin, DetailView):
     def get_queryset(self):
         user = self.request.user
 
-        if user.is_superuser or getattr(user, 'is_manager', False):
+        if user.is_superuser or user.groups.filter(name="Manager").exists():
             return Recipient.objects.all()
 
         return Recipient.objects.filter(owner=user)

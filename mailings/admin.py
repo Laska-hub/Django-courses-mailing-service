@@ -18,7 +18,7 @@ class MailingAdmin(admin.ModelAdmin):
         for obj in qs:
             obj.update_status()
 
-        if request.user.is_superuser or getattr(request.user, 'is_manager', False):
+        if request.user.is_superuser or request.user.groups.filter(name="Manager").exists():
             return qs
 
         return qs.filter(owner=request.user)
@@ -48,7 +48,7 @@ class AttemptAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
 
-        if request.user.is_superuser or getattr(request.user, 'is_manager', False):
+        if request.user.is_superuser or request.user.groups.filter(name="Manager").exists():
             return qs
 
         return qs.filter(mailing__owner=request.user)

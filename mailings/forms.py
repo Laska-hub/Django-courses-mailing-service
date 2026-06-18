@@ -1,6 +1,8 @@
 from django import forms
 from django.utils import timezone
 
+from messages_app.models import Message
+from clients.models import Recipient
 from .models import Mailing
 
 
@@ -9,6 +11,15 @@ class MailingForm(forms.ModelForm):
         model = Mailing
         fields = '__all__'
         exclude = ['owner']
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        #  ОГРАНИЧЕНИЕ ДОСТУПА ПО ПОЛЬЗОВАТЕЛЮ
+        if self.user:
+            self.fields['message'].queryset = Message.objects.filter(owner=self.user)
+            self.fields['recipients'].queryset = Recipient.objects.filter(owner=self.user)
 
     def clean(self):
         cleaned_data = super().clean()

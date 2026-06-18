@@ -20,7 +20,7 @@ class MessageListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
 
-        if user.is_superuser or getattr(user, 'is_manager', False):
+        if user.is_superuser or user.groups.filter(name="Manager").exists():
             return Message.objects.all()
 
         return Message.objects.filter(owner=user)
@@ -34,7 +34,7 @@ class MessageDetailView(LoginRequiredMixin, DetailView):
     def get_queryset(self):
         user = self.request.user
 
-        if user.is_superuser or getattr(user, 'is_manager', False):
+        if user.is_superuser or user.groups.filter(name="Manager").exists():
             return Message.objects.all()
 
         return Message.objects.filter(owner=user)
@@ -60,7 +60,7 @@ class MessageUpdateView(LoginRequiredMixin, UpdateView):
     def get_queryset(self):
         user = self.request.user
 
-        if user.is_superuser or getattr(user, 'is_manager', False):
+        if user.is_superuser or user.groups.filter(name="Manager").exists():
             return Message.objects.all()
 
         return Message.objects.filter(owner=user)
@@ -74,7 +74,7 @@ class MessageDeleteView(LoginRequiredMixin, DeleteView):
     def get_queryset(self):
         user = self.request.user
 
-        if user.is_superuser or getattr(user, 'is_manager', False):
+        if user.is_superuser or user.groups.filter(name="Manager").exists():
             return Message.objects.all()
 
         return Message.objects.filter(owner=user)
