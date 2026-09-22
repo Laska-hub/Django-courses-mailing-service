@@ -5,7 +5,7 @@ from django.views.generic import (
     UpdateView,
     DeleteView,
     TemplateView,
-    View
+    View,
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
@@ -25,8 +25,8 @@ from .forms import MailingForm
 # HOME PAGE (STATISTICS + CACHE)
 # =========================
 class HomeView(LoginRequiredMixin, TemplateView):
-    template_name = 'home.html'
-    login_url = '/users/login/'
+    template_name = "home.html"
+    login_url = "/users/login/"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -39,10 +39,10 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
             stats = {
                 "total_mailings": mailings.count(),
-                "active_mailings": mailings.filter(status='started').count(),
+                "active_mailings": mailings.filter(status="started").count(),
                 "total_recipients": Recipient.objects.count(),
-                "attempts_success": Attempt.objects.filter(status='success').count(),
-                "attempts_failed": Attempt.objects.filter(status='failed').count(),
+                "attempts_success": Attempt.objects.filter(status="success").count(),
+                "attempts_failed": Attempt.objects.filter(status="failed").count(),
             }
 
             cache.set(cache_key, stats, 60)
@@ -56,9 +56,9 @@ class HomeView(LoginRequiredMixin, TemplateView):
 # =========================
 class MailingListView(LoginRequiredMixin, ListView):
     model = Mailing
-    template_name = 'mailings/mailing_list.html'
-    context_object_name = 'mailings'
-    login_url = '/users/login/'
+    template_name = "mailings/mailing_list.html"
+    context_object_name = "mailings"
+    login_url = "/users/login/"
 
     def get_queryset(self):
         user = self.request.user
@@ -74,8 +74,8 @@ class MailingListView(LoginRequiredMixin, ListView):
 # =========================
 class MailingDetailView(LoginRequiredMixin, DetailView):
     model = Mailing
-    template_name = 'mailings/mailing_detail.html'
-    context_object_name = 'mailing'
+    template_name = "mailings/mailing_detail.html"
+    context_object_name = "mailing"
 
     def get_object(self):
         obj = super().get_object()
@@ -89,8 +89,8 @@ class MailingDetailView(LoginRequiredMixin, DetailView):
 class MailingCreateView(LoginRequiredMixin, CreateView):
     model = Mailing
     form_class = MailingForm
-    template_name = 'mailings/mailing_form.html'
-    success_url = reverse_lazy('mailings:list')
+    template_name = "mailings/mailing_form.html"
+    success_url = reverse_lazy("mailings:list")
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
@@ -99,11 +99,6 @@ class MailingCreateView(LoginRequiredMixin, CreateView):
         cache.delete("home_stats")
         return response
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-
 
 # =========================
 # MAILING UPDATE
@@ -111,16 +106,11 @@ class MailingCreateView(LoginRequiredMixin, CreateView):
 class MailingUpdateView(LoginRequiredMixin, UpdateView):
     model = Mailing
     form_class = MailingForm
-    template_name = 'mailings/mailing_form.html'
-    success_url = reverse_lazy('mailings:list')
+    template_name = "mailings/mailing_form.html"
+    success_url = reverse_lazy("mailings:list")
 
     def get_queryset(self):
         return Mailing.objects.filter(owner=self.request.user)
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
 
 
 # =========================
@@ -128,8 +118,8 @@ class MailingUpdateView(LoginRequiredMixin, UpdateView):
 # =========================
 class MailingDeleteView(LoginRequiredMixin, DeleteView):
     model = Mailing
-    template_name = 'mailings/mailing_confirm_delete.html'
-    success_url = reverse_lazy('mailings:list')
+    template_name = "mailings/mailing_confirm_delete.html"
+    success_url = reverse_lazy("mailings:list")
 
     def get_queryset(self):
         return Mailing.objects.filter(owner=self.request.user)

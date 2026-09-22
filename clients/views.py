@@ -1,4 +1,11 @@
-from django.views.generic import ListView, CreateView, DetailView
+from django.urls import reverse_lazy
+from django.views.generic import (
+    ListView,
+    CreateView,
+    DetailView,
+    UpdateView,
+    DeleteView,
+)
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .models import Recipient
@@ -37,8 +44,37 @@ class RecipientCreateView(LoginRequiredMixin, CreateView):
     model = Recipient
     form_class = RecipientForm
     template_name = 'clients/recipient_form.html'
-    success_url = '/clients/'
+    success_url = reverse_lazy('clients:list')
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
         return super().form_valid(form)
+
+
+class RecipientUpdateView(LoginRequiredMixin, UpdateView):
+    model = Recipient
+    form_class = RecipientForm
+    template_name = 'clients/recipient_form.html'
+    success_url = reverse_lazy('clients:list')
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser or user.groups.filter(name="Manager").exists():
+            return Recipient.objects.all()
+
+        return Recipient.objects.filter(owner=user)
+
+
+class RecipientDeleteView(LoginRequiredMixin, DeleteView):
+    model = Recipient
+    template_name = 'clients/recipient_confirm_delete.html'
+    success_url = reverse_lazy('clients:list')
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_superuser or user.groups.filter(name="Manager").exists():
+            return Recipient.objects.all()
+
+        return Recipient.objects.filter(owner=user)
